@@ -26,6 +26,8 @@ services:
     container_name: netwalk-api
     ports:
       - "8000:8000" # api exposed to host at 8000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     env_file:
       - .env
     environment:
@@ -48,25 +50,24 @@ services:
     networks:
       - netwalk-network
 
-  frontend:
-    build:
-      context: ./frontend
-    container_name: netwalk-frontend
+  iperf-proxy:
+    image: nginx:1.31-alpine3.23
+    container_name: netwalk-iperf-proxy
     ports:
-      - "8080:80" # nginx exposed to host at 8000
+      - "5201:5201/tcp"
+      - "5201:5201/udp"
     volumes:
-      - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./backend/iperf-nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      - api
+      - iperf3
+      - iperf3-2
+      - iperf3-3
     networks:
       - netwalk-network
 
   iperf3:
     image: networkstatic/iperf3
     container_name: netwalk-iperf
-    ports:
-      - "5201:5201/tcp"
-      - "5201:5201/udp"
     command: ["-s"]
     restart: always
     networks:
@@ -74,9 +75,6 @@ services:
   iperf3-2:
     image: networkstatic/iperf3
     container_name: netwalk-iperf-2
-    ports:
-      - "5202:5201/tcp"
-      - "5202:5201/udp"
     command: ["-s"]
     restart: always
     networks:
@@ -84,9 +82,6 @@ services:
   iperf3-3:
     image: networkstatic/iperf3
     container_name: netwalk-iperf-3
-    ports:
-      - "5203:5201/tcp"
-      - "5203:5201/udp"
     command: ["-s"]
     restart: always
     networks:
@@ -110,6 +105,19 @@ services:
         condition: service_healthy
     profiles:
       - test
+    networks:
+      - netwalk-network
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: netwalk-frontend
+    ports:
+      - "8080:80" # nginx exposed to host at 8000
+    volumes:
+      - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api
     networks:
       - netwalk-network
 
