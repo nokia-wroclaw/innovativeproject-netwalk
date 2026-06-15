@@ -10,7 +10,7 @@ services:
       - "5432"
     volumes:
       - db_data:/var/lib/postgresql/data
-      - ./init-scripts:/docker-entrypoint-initdb.d
+      - ./backend/init-scripts:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}"]
       interval: 5s
@@ -19,16 +19,15 @@ services:
     networks:
       - netwalk-network
 
-
   api:
     build:
-      context: .
+      context: ./backend
       target: runner
     container_name: netwalk-api
     ports:
       - "8000:8000"
     env_file:
-      - .env
+      - ./backend/.env
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@timescaledb:5432/${POSTGRES_DB}
     depends_on:
@@ -51,7 +50,7 @@ services:
 
   frontend:
     build:
-      context: ../frontend
+      context: ./frontend
     container_name: netwalk-frontend
     ports:
       - "3001:3000"
@@ -59,8 +58,8 @@ services:
       - PORT=3000
       - WATCHPACK_POLLING=true
     volumes:
-      - ../frontend/src:/app/src
-      - ../frontend/public:/app/public
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
     depends_on:
       - api
     networks:
@@ -68,7 +67,6 @@ services:
   iperf3:
     image: networkstatic/iperf3
     container_name: netwalk-iperf
-    # android możee ucinać połączenia na niestandartowych portach, więc reroutujemy do 443
     ports:
       - "5201:5201/tcp"
       - "5201:5201/udp"
@@ -82,7 +80,7 @@ services:
     ports:
       - "5202:5201/tcp"
       - "5202:5201/udp"
-    command: [ "-s" ]
+    command: ["-s"]
     restart: always
     networks:
       - netwalk-network
@@ -93,14 +91,14 @@ services:
     ports:
       - "5203:5201/tcp"
       - "5203:5201/udp"
-    command: [ "-s" ]
+    command: ["-s"]
     restart: always
     networks:
       - netwalk-network
 
   tests:
     build:
-      context: .
+      context: ./backend
       target: test
     container_name: netwalk-tests
     environment:
