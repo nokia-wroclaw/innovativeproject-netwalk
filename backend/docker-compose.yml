@@ -49,6 +49,22 @@ services:
     networks:
       - netwalk-network
 
+  frontend:
+    build:
+      context: ../frontend
+    container_name: netwalk-frontend
+    ports:
+      - "3001:3000"
+    environment:
+      - PORT=3000
+      - WATCHPACK_POLLING=true
+    volumes:
+      - ../frontend/src:/app/src
+      - ../frontend/public:/app/public
+    depends_on:
+      - api
+    networks:
+      - netwalk-network
   iperf3:
     image: networkstatic/iperf3
     container_name: netwalk-iperf
