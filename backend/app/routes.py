@@ -293,7 +293,6 @@ def get_device_sessions(
 async def create_measurements_batch(
     request: Request,
     db: DbSession,
-    _: None = Depends(verify_basic_auth),
 ):
     raw_body = await request.body()
 
