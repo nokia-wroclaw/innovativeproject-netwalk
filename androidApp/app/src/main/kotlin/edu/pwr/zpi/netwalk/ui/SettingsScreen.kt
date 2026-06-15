@@ -209,6 +209,19 @@ fun SettingsScreen(
             )
         }
 
+        SettingStringField(
+            label = "Auth Username",
+            value = editableSettings.authUser,
+            onValueChange = { editableSettings = editableSettings.copy(authUser = it) },
+            placeholder = viewModel.defaults.authUser,
+        )
+        SettingStringField(
+            label = "Auth Password",
+            value = editableSettings.authPass,
+            onValueChange = { editableSettings = editableSettings.copy(authPass = it) },
+            placeholder = viewModel.defaults.authPass,
+        )
+
         val context = LocalContext.current
 
         Button(
