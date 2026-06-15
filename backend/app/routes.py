@@ -2,10 +2,9 @@
 import gzip
 import json
 import os
-from datetime import datetime, UTC
+from datetime import datetime
 import secrets
 from typing import Annotated
-from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -346,25 +345,6 @@ async def create_measurements_batch(
         db.rollback()
 
         raise HTTPException(status_code=500, detail=f"Database insert failed: {e!s}") from e
-
-
-@router.post("/sessions/start", response_model=schemas.SessionResponse)
-def start_session(
-    _: None = Depends(verify_basic_auth),
-):
-    new_session_id = uuid4()
-    return schemas.SessionResponse(
-        session_id=new_session_id,
-        started_at=datetime.now(tz=UTC),
-    )
-
-
-@router.post("/sessions/{session_id}/stop")
-def stop_session(
-    session_id: str,
-    _: None = Depends(verify_basic_auth),
-):
-    return {"status": "ok", "message": f"Session {session_id} stopped"}
 
 
 @router.get("/sessions")
