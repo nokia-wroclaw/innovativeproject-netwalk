@@ -49,7 +49,6 @@ class Measurement(Base):
     os_version = Column(String)
 
     # testy wydajności
-    throughput_mbps = Column(Float)
     test_start_time = Column(TIMESTAMP(timezone=True))
     test_duration = Column(Float)
     latency_ms = Column(Float)

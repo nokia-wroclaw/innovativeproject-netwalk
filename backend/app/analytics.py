@@ -40,9 +40,12 @@ def kpi_stats(db: Session, network_type: str | None = None, android_id: str | No
         func.min(Measurement.sinr).label("min_sinr"),
         func.max(Measurement.sinr).label("max_sinr"),
         func.avg(Measurement.sinr).label("avg_sinr"),
-        func.min(Measurement.throughput_mbps).label("min_throughput"),
-        func.max(Measurement.throughput_mbps).label("max_throughput"),
-        func.avg(Measurement.throughput_mbps).label("avg_throughput"),
+        func.min(Measurement.dl_throughput_mbps).label("min_dl_throughput"),
+        func.max(Measurement.dl_throughput_mbps).label("max_dl_throughput"),
+        func.avg(Measurement.dl_throughput_mbps).label("avg_dl_throughput"),
+        func.min(Measurement.ul_throughput_mbps).label("min_ul_throughput"),
+        func.max(Measurement.ul_throughput_mbps).label("max_ul_throughput"),
+        func.avg(Measurement.ul_throughput_mbps).label("avg_ul_throughput"),
     ).first()
 
     if not result:
@@ -64,10 +67,15 @@ def kpi_stats(db: Session, network_type: str | None = None, android_id: str | No
             "max": result.max_sinr,
             "avg": _to_float(result.avg_sinr),
         },
-        "throughput_mbps": {
-            "min": _to_float(result.min_throughput),
-            "max": _to_float(result.max_throughput),
-            "avg": _to_float(result.avg_throughput),
+        "dl_throughput_mbps": {
+            "min": _to_float(result.min_dl_throughput),
+            "max": _to_float(result.max_dl_throughput),
+            "avg": _to_float(result.avg_dl_throughput),
+        },
+        "ul_throughput_mbps": {
+            "min": _to_float(result.min_ul_throughput),
+            "max": _to_float(result.max_ul_throughput),
+            "avg": _to_float(result.avg_ul_throughput),
         },
     }
 
@@ -84,7 +92,8 @@ def get_heatmap_points(
         "rsrp": Measurement.rsrp,
         "rsrq": Measurement.rsrq,
         "sinr": Measurement.sinr,
-        "throughput_mbps": Measurement.throughput_mbps,
+        "dl_throughput_mbps": Measurement.dl_throughput_mbps,
+        "ul_throughput_mbps": Measurement.ul_throughput_mbps,
     }
 
     metric_column = allowed_parameters.get(parameter, Measurement.rsrp)
@@ -159,7 +168,8 @@ def device_sessions(db: Session, android_id: str, limit: int = 5):
             func.count(Measurement.id).label("measurement_count"),
             func.avg(Measurement.rsrp).label("avg_rsrp"),
             func.avg(Measurement.sinr).label("avg_sinr"),
-            func.avg(Measurement.throughput_mbps).label("avg_throughput"),
+            func.avg(Measurement.dl_throughput_mbps).label("avg_dl_throughput"),
+            func.avg(Measurement.ul_throughput_mbps).label("avg_ul_throughput"),
         )
         .filter(Measurement.android_id == android_id)
         .group_by(Measurement.session_id)
@@ -176,7 +186,8 @@ def device_sessions(db: Session, android_id: str, limit: int = 5):
             "measurement_count": row.measurement_count,
             "avg_rsrp": _to_float(row.avg_rsrp),
             "avg_sinr": _to_float(row.avg_sinr),
-            "avg_throughput": _to_float(row.avg_throughput),
+            "avg_dl_throughput": _to_float(row.avg_dl_throughput),
+            "avg_ul_throughput": _to_float(row.avg_ul_throughput),
         }
         for row in rows
     ]
@@ -200,7 +211,8 @@ def last_measurement(db: Session):
         "sinr": row.sinr,
         "network_type": row.network_type,
         "battery_level": row.battery_level,
-        "throughput_mbps": row.throughput_mbps,
+        "dl_throughput_mbps": row.dl_throughput_mbps,
+        "ul_throughput_mbps": row.ul_throughput_mbps,
         "test_duration": row.test_duration,
     }
 
@@ -213,7 +225,7 @@ def propagation_map(
     network_type: str | None = None,
     resolution: int = 50,
 ):
-    allowed = {"rsrp", "rsrq", "sinr", "throughput_mbps"}
+    allowed = {"rsrp", "rsrq", "sinr", "dl_throughput_mbps", "ul_throughput_mbps"}
     col = parameter if parameter in allowed else "rsrp"
 
     # filtry

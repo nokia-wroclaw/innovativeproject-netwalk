@@ -70,7 +70,7 @@ def measurement_filters(  # noqa: PLR0913
         query = query.filter(models.Measurement.sinr >= min_sinr)
 
     if min_throughput is not None:
-        query = query.filter(models.Measurement.throughput_mbps >= min_throughput)
+        query = query.filter(models.Measurement.dl_throughput_mbps >= min_throughput)
 
     if start_date:
         query = query.filter(models.Measurement.measured_at >= start_date)
@@ -373,8 +373,10 @@ def get_measurements_stats(  # noqa: PLR0913
         func.avg(models.Measurement.sinr).label("avg_sinr"),
         func.min(models.Measurement.sinr).label("min_sinr"),
         func.max(models.Measurement.sinr).label("max_sinr"),
-        func.avg(models.Measurement.throughput_mbps).label("avg_throughput"),
-        func.max(models.Measurement.throughput_mbps).label("max_throughput"),
+        func.avg(models.Measurement.dl_throughput_mbps).label("avg_dl_throughput"),
+        func.max(models.Measurement.dl_throughput_mbps).label("max_dl_throughput"),
+        func.avg(models.Measurement.ul_throughput_mbps).label("avg_ul_throughput"),
+        func.max(models.Measurement.ul_throughput_mbps).label("max_ul_throughput"),
     ).first()
 
     filtered_base = measurement_filters(
@@ -430,8 +432,18 @@ def get_measurements_stats(  # noqa: PLR0913
         "avg_sinr": float(stats.avg_sinr) if stats.avg_sinr is not None else None,
         "min_sinr": stats.min_sinr,
         "max_sinr": stats.max_sinr,
-        "avg_throughput": float(stats.avg_throughput) if stats.avg_throughput is not None else None,
-        "max_throughput": float(stats.max_throughput) if stats.max_throughput is not None else None,
+        "avg_dl_throughput": float(stats.avg_dl_throughput)
+        if stats.avg_dl_throughput is not None
+        else None,
+        "max_dl_throughput": float(stats.max_dl_throughput)
+        if stats.max_dl_throughput is not None
+        else None,
+        "avg_ul_throughput": float(stats.avg_ul_throughput)
+        if stats.avg_ul_throughput is not None
+        else None,
+        "max_ul_throughput": float(stats.max_ul_throughput)
+        if stats.max_ul_throughput is not None
+        else None,
         "network_distribution": network_dist,
         "band_distribution": band_dist,
         "measurements_by_hour": hour_dist,
@@ -486,7 +498,8 @@ def get_kpi_with_cpu_filter(
         query = query.filter(models.Measurement.host_cpu >= cpu_threshold)
 
     result = query.with_entities(
-        func.avg(models.Measurement.throughput_mbps).label("avg_throughput"),
+        func.avg(models.Measurement.dl_throughput_mbps).label("avg_dl_throughput"),
+        func.avg(models.Measurement.ul_throughput_mbps).label("avg_ul_throughput"),
         func.avg(models.Measurement.latency_ms).label("avg_latency"),
         func.avg(models.Measurement.rsrp).label("avg_rsrp"),
     ).first()
@@ -494,8 +507,11 @@ def get_kpi_with_cpu_filter(
     return {
         "cpu_filter": cpu_filter,
         "cpu_threshold": cpu_threshold,
-        "avg_throughput": float(result.avg_throughput)
-        if result and result.avg_throughput
+        "avg_dl_throughput": float(result.avg_dl_throughput)
+        if result and result.avg_dl_throughput
+        else None,
+        "avg_ul_throughput": float(result.avg_ul_throughput)
+        if result and result.avg_ul_throughput
         else None,
         "avg_latency": float(result.avg_latency) if result and result.avg_latency else None,
         "avg_rsrp": float(result.avg_rsrp) if result and result.avg_rsrp else None,

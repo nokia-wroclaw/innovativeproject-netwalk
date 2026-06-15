@@ -37,7 +37,6 @@ class MeasurementBase(BaseModel):
     battery_level: int | None = None
     battery_temp: float | None = None
     os_version: str | None = None
-    throughput_mbps: float | None = None
     latency_ms: float | None = None
     jitter_ms: float | None = None
     test_start_time: datetime | None = None
@@ -95,7 +94,6 @@ class MeasurementCreate(MeasurementBase):
         "battery_level": 47,
         "battery_temp": 25.0,
         "os_version": "Android 14"
-        "throughput_mbps": 998.66,
         "latency_ms": 661.0,
         "jitter_ms": 214.0,
         "test_start_time": "2026-05-14T03:37:24Z",
@@ -245,8 +243,10 @@ class StatisticsResponse(BaseModel):
     max_sinr: int | None
 
     # prędkość
-    avg_throughput: float | None
-    max_throughput: float | None
+    avg_dl_throughput: float | None
+    max_dl_throughput: float | None
+    avg_ul_throughput: float | None
+    max_ul_throughput: float | None
 
     # wykresy i rozkłady
     network_distribution: dict[str, int]
