@@ -1,14 +1,14 @@
 # ruff: noqa: I001
 import gzip
 import json
-import binascii
-import base64
 import os
 from datetime import datetime, UTC
+import secrets
 from typing import Annotated
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from geoalchemy2 import functions as geo_func
 from sqlalchemy import extract, func
 from sqlalchemy.orm import Session
@@ -30,51 +30,34 @@ from app.database import get_db
 
 router = APIRouter()
 DbSession = Annotated[Session, Depends(get_db)]
+security = HTTPBasic(auto_error=True)
 
 
 # Basic Auth
-def verify_basic_auth(request: Request):
-    auth_header = request.headers.get("Authorization")
-    if not auth_header:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Brak nagłówka autoryzacji",
-            headers={"WWW-Authenticate": "Basic"},
-        )
-
-    try:
-        scheme, credentials = auth_header.split(" ", 1)
-        if scheme.lower() != "basic":
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Nieobsługiwany schemat autoryzacji",
-                headers={"WWW-Authenticate": "Basic"},
-            )
-        decoded = base64.b64decode(credentials).decode("utf-8")
-        username, password = decoded.split(":", 1)
-    except (ValueError, binascii.Error, UnicodeDecodeError) as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Nieprawidłowy format danych uwierzytelniających",
-            headers={"WWW-Authenticate": "Basic"},
-        ) from e
-
+def verify_basic_auth(
+    credentials: Annotated[HTTPBasicCredentials, Depends(security)],
+) -> bool:  # Changed type hint to bool
     expected_username = os.environ.get("BASIC_AUTH_USERNAME")
     expected_password = os.environ.get("BASIC_AUTH_PASSWORD")
 
     if not expected_username or not expected_password:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Serwer nie skonfigurował uwierzytelniania (brak zmiennych środowiskowych)",
+            detail="Credentials were not configured.",
         )
 
-    if username != expected_username or password != expected_password:
+    is_username_correct = secrets.compare_digest(credentials.username, expected_username)
+    is_password_correct = secrets.compare_digest(credentials.password, expected_password)
+
+    if not (is_username_correct and is_password_correct):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Nieprawidłowa nazwa użytkownika lub hasło",
+            detail="Wrong username or password.",
+            headers={"WWW-Authenticate": "Basic"},
         )
 
     return True
+
 
 def measurement_filters(  # noqa: PLR0913
     query,
