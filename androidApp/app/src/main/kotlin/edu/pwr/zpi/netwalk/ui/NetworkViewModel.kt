@@ -51,6 +51,8 @@ data class NetworkSettingsState(
     val targetBandwidth: String,
     val useUdp: Boolean,
     val sendImmediately: Boolean,
+    val authUser: String,
+    val authPass: String,
 )
 
 class NetworkViewModel(
@@ -123,6 +125,8 @@ class NetworkViewModel(
         settings.targetBandwidth.flow,
         settings.bufferLength.flow,
         settings.sendImmediately.flow,
+        settings.authUser.flow,
+        settings.authPass.flow,
     ) { values: Array<Any?> ->
         NetworkSettingsState(
             serverUrl = values[0] as String,
@@ -135,6 +139,8 @@ class NetworkViewModel(
             targetBandwidth = values[7] as String,
             bufferLength = values[8] as String,
             sendImmediately = values[9] as Boolean,
+            authUser = values[10] as String,
+            authPass = values[11] as String,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -150,6 +156,8 @@ class NetworkViewModel(
             settings.bufferLength.defaultValue,
             settings.useUdp.defaultValue,
             settings.sendImmediately.defaultValue,
+            settings.authUser.defaultValue,
+            settings.authPass.defaultValue,
         ),
     )
 
@@ -165,6 +173,8 @@ class NetworkViewModel(
             settings.bufferLength.update(state.bufferLength)
             settings.useUdp.update(state.useUdp)
             settings.sendImmediately.update(state.sendImmediately)
+            settings.authUser.update(state.authUser)
+            settings.authPass.update(state.authPass)
         }
     }
 
@@ -179,6 +189,8 @@ class NetworkViewModel(
         settings.bufferLength.defaultValue,
         settings.useUdp.defaultValue,
         settings.sendImmediately.defaultValue,
+        settings.authUser.defaultValue,
+        settings.authPass.defaultValue,
     )
 
     private suspend fun sendMeasurementRequest(request: MeasurementRequest) {
@@ -312,15 +324,21 @@ class NetworkViewModel(
     )
 
     init {
-        // obserwujemy zmiane url
         viewModelScope.launch {
-            settings.serverUrl.flow.collect { url ->
-                if (url != currentServerUrl) {
-                    client = NetworkClient(url)
-                    currentServerUrl = url
-                    logI("[NetworkViewModel: init] Server URL updated: $url")
-                    lastStatus = "Server URL updated: $url"
-                }
+            combine(
+                settings.serverUrl.flow,
+                settings.authUser.flow,
+                settings.authPass.flow,
+            ) { url, user, pass ->
+                Triple(url, user, pass)
+            }.collect { (url, user, pass) ->
+                client = NetworkClient(
+                    baseUrl = url,
+                    authUser = user,
+                    authPass = pass,
+                )
+                currentServerUrl = url
+                logI("[NetworkViewModel: init] NetworkClient updated with URL: $url and User: $user")
             }
         }
     }
