@@ -155,7 +155,7 @@ def get_measurements(
         .offset(skip)
         .limit(limit)
         .all()
-    )
+    )  # fmt: skip
 
 
 @router.get("/measurements/filtered", response_model=list[schemas.MeasurementResponse])
@@ -218,7 +218,7 @@ def get_measurements_paginated(
         .offset(skip)
         .limit(limit)
         .all()
-    )
+    )  # fmt: skip
 
     serialized_items = [schemas.MeasurementResponse.model_validate(item) for item in items]
 
