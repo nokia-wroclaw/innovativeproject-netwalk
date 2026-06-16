@@ -242,6 +242,26 @@ def get_device_sessions(
 ):
     return device_sessions(db, android_id=android_id, limit=limit)
 
+@router.get("/devices/{android_id}/last-measurement")
+def get_last_measurement_for_device(
+    android_id: str,
+    db: DbSession,
+):
+    measurement = (
+        db.query(models.Measurement)
+        .filter(models.Measurement.android_id == android_id)
+        .order_by(models.Measurement.measured_at.desc())
+        .first()
+    )
+
+    if measurement is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Brak pomiarów dla wybranego urządzenia.",
+        )
+
+    return measurement
+
 
 @router.post("/measurements/batch", response_model=schemas.BatchResponse)
 async def create_measurements_batch(request: Request, db: DbSession):
