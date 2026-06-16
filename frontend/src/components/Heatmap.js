@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Circle, Popup } from "react-leaflet";
+import { MapContainer, Circle, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "./Heatmap.css";
 
@@ -157,10 +157,6 @@ export default function Heatmap({
 
       <div className="leaflet-map-wrapper">
         <MapContainer center={FALLBACK_CENTER} zoom={12} scrollWheelZoom className="leaflet-map">
-          <TileLayer
-            attribution="OpenStreetMap contributors, CARTO"
-            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-          />
 
           {viewMode === "measurements" &&
             measurements.map((measurement, index) => {
@@ -191,7 +187,6 @@ export default function Heatmap({
                     <strong>DL Throughput:</strong> {measurement.dl_throughput_mbps ?? "Brak"} Mbps <br/>
                     <strong>UL Throughput:</strong> {measurement.ul_throughput_mbps ?? "Brak"} Mbps <br/>
                     <strong>Host CPU:</strong> {measurement.host_cpu ?? "Brak"}% <br/>
-                    <strong>Remote CPU:</strong> {measurement.remote_cpu ?? "Brak"}% <br/>
                     <strong>Sieć:</strong> {measurement.network_type || "Brak"} <br />
                     <strong>Cell ID:</strong> {measurement.cell_id || "Brak"} <br />
                     <strong>Wybrana warstwa:</strong> {layer.toUpperCase()} = {value ?? "Brak"}
