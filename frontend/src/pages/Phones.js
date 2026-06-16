@@ -6,13 +6,14 @@ import PhoneList from "../components/PhoneList";
 import RecentSessions from "../components/RecentSessions";
 import "./Phones.css";
 
-const API_URL = "http://localhost:8000";
+const API_URL = "/api";
 
 const EMPTY_KPI = {
   rsrp: { min: 0, max: 0, avg: 0 },
   rsrq: { min: 0, max: 0, avg: 0 },
   sinr: { min: 0, max: 0, avg: 0 },
-  throughput_mbps: { min: 0, max: 0, avg: 0 },
+  dl_throughput_mbps: { min: 0, max: 0, avg: 0 },
+  ul_throughput_mbps: { min: 0, max: 0, avg: 0 },
 };
 
 async function fetchJson(path, fallback) {
@@ -39,45 +40,94 @@ export default function Phones() {
   const [selectedSession, setSelectedSession] = useState(null);
   const [phoneLteKpi, setPhoneLteKpi] = useState(EMPTY_KPI);
   const [phoneFiveGKpi, setPhoneFiveGKpi] = useState(EMPTY_KPI);
+  const [lastMeasurement, setLastMeasurement] = useState(null);
 
-  useEffect(() => {
-    async function loadDevices() {
-      const data = await fetchJson("/devices", []);
-      setDevices(data || []);
-      setSelectedDevice(data?.[0] || null);
+useEffect(() => {
+  async function loadLastMeasurement() {
+    if (!selectedDevice?.android_id) {
+      setLastMeasurement(null);
+      return;
     }
 
-    loadDevices();
-  }, []);
+    const data = await fetchJson(
+      `/devices/${selectedDevice.android_id}/last-measurement`,
+      null
+    );
 
-  useEffect(() => {
-    async function loadPhoneData() {
-      if (!selectedDevice?.android_id) {
-        setSessions([]);
-        setSelectedSession(null);
-        return;
-      }
+    setLastMeasurement(data);
+  }
 
-      const deviceSessions = await fetchJson(`/devices/${selectedDevice.android_id}/sessions?limit=5`, []);
+  loadLastMeasurement();
+}, [selectedDevice]);  
 
-      const lteKpi = await fetchJson(
-        `/analysis/kpi?android_id=${selectedDevice.android_id}&network_type=LTE`,
-        EMPTY_KPI
-      );
+useEffect(() => {
+  async function loadDevices() {
+    const data = await fetchJson("/devices", []);
+    setDevices(data || []);
+    setSelectedDevice(data?.[0] || null);
+  }
 
-      const fiveGKpi = await fetchJson(
-        `/analysis/kpi?android_id=${selectedDevice.android_id}&network_type=5G`,
-        EMPTY_KPI
-      );
+  loadDevices();
+}, []);
 
-      setPhoneLteKpi(lteKpi || EMPTY_KPI);
-      setPhoneFiveGKpi(fiveGKpi || EMPTY_KPI);
-      setSessions(deviceSessions || []);
-      setSelectedSession(deviceSessions?.[0] || null);
+useEffect(() => {
+  async function loadSessions() {
+    if (!selectedDevice?.android_id) {
+      setSessions([]);
+      setSelectedSession(null);
+      return;
     }
 
-    loadPhoneData();
-  }, [selectedDevice]);
+    const deviceSessions = await fetchJson(
+      `/devices/${selectedDevice.android_id}/sessions?limit=100`,
+      []
+    );
+
+    setSessions(deviceSessions || []);
+    setSelectedSession(null);
+  }
+
+  loadSessions();
+}, [selectedDevice]);
+
+useEffect(() => {
+  async function loadPhoneKpi() {
+    if (!selectedDevice?.android_id) {
+      setPhoneLteKpi(EMPTY_KPI);
+      setPhoneFiveGKpi(EMPTY_KPI);
+      return;
+    }
+
+    const baseParams = new URLSearchParams({
+      android_id: selectedDevice.android_id,
+    });
+
+    if (selectedSession?.session_id) {
+      baseParams.append("session_id", selectedSession.session_id);
+    }
+
+    const lteParams = new URLSearchParams(baseParams);
+    lteParams.append("network_type", "LTE");
+
+    const fiveGParams = new URLSearchParams(baseParams);
+    fiveGParams.append("network_type", "5G");
+
+    const lteKpi = await fetchJson(
+      `/analysis/kpi?${lteParams.toString()}`,
+      EMPTY_KPI
+    );
+
+    const fiveGKpi = await fetchJson(
+      `/analysis/kpi?${fiveGParams.toString()}`,
+      EMPTY_KPI
+    );
+
+    setPhoneLteKpi(lteKpi || EMPTY_KPI);
+    setPhoneFiveGKpi(fiveGKpi || EMPTY_KPI);
+  }
+
+  loadPhoneKpi();
+}, [selectedDevice, selectedSession]);
 
   return (
     <main className="page">
@@ -98,11 +148,14 @@ export default function Phones() {
             </div>
           </div>
 
-          <div className="card summary-row">
-            <Metric label="Bateria" value={`${formatValue(selectedDevice?.last_battery)}%`} />
-            <Metric label="Stan" value={selectedDevice ? "Dane dostępne" : "Brak danych"} />
-            <Metric label="Zużycie danych" value="0 GB" />
-          </div>
+<div className="summary-row">
+  <Metric label="Bateria" value={`${formatValue(lastMeasurement?.battery_level)}%`} />
+  <Metric label="Host CPU" value={`${formatValue(lastMeasurement?.host_cpu)}%`} />
+  <Metric
+    label="Ostatnia sesja"
+    value={lastMeasurement?.session_id ? lastMeasurement.session_id.slice(0, 8) : "-"}
+  />
+</div>
 
           <RecentSessions sessions={sessions} selectedSession={selectedSession} setSelectedSession={setSelectedSession} />
 

@@ -17,13 +17,14 @@
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: 1.15fr 1.35fr;
+  grid-template-columns: 1.5fr 1.2fr;
   gap: 24px;
-  margin-bottom: 24px;
 }
 
 .dashboard-map-panel {
-  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
 .dashboard-kpi-panel {
@@ -32,3 +33,4 @@
   flex-direction: column;
   gap: 18px;
 }
+

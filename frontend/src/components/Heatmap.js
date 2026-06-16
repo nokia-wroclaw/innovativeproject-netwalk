@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Circle, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "./Heatmap.css";
 
-const API_URL = "http://localhost:8000";
+const API_URL = "/api";
 const FALLBACK_CENTER = [51.110556, 17.060556];
 
 async function fetchJson(path, fallback) {
@@ -46,7 +46,15 @@ function getColor(value, parameter) {
   return "#000000";
 }
 
-export default function Heatmap({ title = "Mapa pomiarów", androidId = null, sessionId = null }) {
+export default function Heatmap({
+  title = "Mapa pomiarów",
+  androidId = null,
+  sessionId = null,
+  cpuFilter = "all",
+  cpuThreshold = 50,
+  setCpuFilter,
+  setCpuThreshold,
+}) {
   const [layer, setLayer] = useState("rsrp");
   const [measurements, setMeasurements] = useState([]);
   const [viewMode, setViewMode] = useState("measurements");
@@ -93,7 +101,32 @@ export default function Heatmap({ title = "Mapa pomiarów", androidId = null, se
 
   return (
     <section className="card map-card">
-      <h3>{title}</h3>
+      <div className="map-header">
+  <h3>{title}</h3>
+
+  {setCpuFilter && setCpuThreshold ? (
+    <div className="cpu-map-filter">
+      <span>CPU</span>
+
+      <select
+        value={cpuFilter}
+        onChange={(event) => setCpuFilter(event.target.value)}
+      >
+        <option value="all">Wszystkie</option>
+        <option value="without_high">Bez wysokiego</option>
+        <option value="only_high">Tylko wysokie</option>
+      </select>
+
+      <input
+        type="number"
+        value={cpuThreshold}
+        min="0"
+        max="100"
+        onChange={(event) => setCpuThreshold(Number(event.target.value))}
+      />
+    </div>
+  ) : null}
+</div>
 
       <div className="view-toggle">
         <button
@@ -155,7 +188,10 @@ export default function Heatmap({ title = "Mapa pomiarów", androidId = null, se
                     <strong>RSRP:</strong> {measurement.rsrp ?? "Brak"} dBm <br />
                     <strong>RSRQ:</strong> {measurement.rsrq ?? "Brak"} dB <br />
                     <strong>SINR:</strong> {measurement.sinr ?? "Brak"} dB <br />
-                    <strong>Throughput:</strong> {measurement.throughput_mbps ?? "Brak"} Mbps <br />
+                    <strong>DL Throughput:</strong> {measurement.dl_throughput_mbps ?? "Brak"} Mbps <br/>
+                    <strong>UL Throughput:</strong> {measurement.ul_throughput_mbps ?? "Brak"} Mbps <br/>
+                    <strong>Host CPU:</strong> {measurement.host_cpu ?? "Brak"}% <br/>
+                    <strong>Remote CPU:</strong> {measurement.remote_cpu ?? "Brak"}% <br/>
                     <strong>Sieć:</strong> {measurement.network_type || "Brak"} <br />
                     <strong>Cell ID:</strong> {measurement.cell_id || "Brak"} <br />
                     <strong>Wybrana warstwa:</strong> {layer.toUpperCase()} = {value ?? "Brak"}
