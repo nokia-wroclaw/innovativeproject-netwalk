@@ -51,41 +51,39 @@ services:
       - netwalk-network
 
   iperf-proxy:
-    image: nginx:1.31-alpine3.23
+    image: openresty/openresty:1.25.3.1-alpine-fat-amd64
     container_name: netwalk-iperf-proxy
-    ports:
-      - "5201:5201/tcp"
-      - "5201:5201/udp"
+    network_mode: host
     volumes:
-      - ./backend/iperf-nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./backend/iperf-nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro
     depends_on:
       - iperf3
       - iperf3-2
       - iperf3-3
-    networks:
-      - netwalk-network
-
   iperf3:
     image: networkstatic/iperf3
     container_name: netwalk-iperf
     command: ["-s"]
     restart: always
-    networks:
-      - netwalk-network
+    ports:
+      - "127.0.0.1:5202:5201/tcp"
+      - "127.0.0.1:5202:5201/udp"
   iperf3-2:
     image: networkstatic/iperf3
     container_name: netwalk-iperf-2
     command: ["-s"]
     restart: always
-    networks:
-      - netwalk-network
+    ports:
+      - "127.0.0.1:5203:5201/tcp"
+      - "127.0.0.1:5203:5201/udp"
   iperf3-3:
     image: networkstatic/iperf3
     container_name: netwalk-iperf-3
     command: ["-s"]
     restart: always
-    networks:
-      - netwalk-network
+    ports:
+      - "127.0.0.1:5204:5201/tcp"
+      - "127.0.0.1:5204:5201/udp"
 
   tests:
     build:
