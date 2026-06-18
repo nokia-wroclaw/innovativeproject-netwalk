@@ -37,6 +37,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
@@ -209,6 +211,20 @@ fun SettingsScreen(
             )
         }
 
+        SettingStringField(
+            label = "Auth Username",
+            value = editableSettings.authUser,
+            onValueChange = { editableSettings = editableSettings.copy(authUser = it) },
+            placeholder = viewModel.defaults.authUser,
+        )
+        SettingStringField(
+            label = "Auth Password",
+            value = editableSettings.authPass,
+            onValueChange = { editableSettings = editableSettings.copy(authPass = it) },
+            placeholder = viewModel.defaults.authPass,
+            isPasswordField = true,
+        )
+
         val context = LocalContext.current
 
         Button(
@@ -253,6 +269,7 @@ fun SettingStringField(
     errorText: String = "Invalid input",
     enabled: Boolean = true,
     explanationText: String? = null,
+    isPasswordField: Boolean = false,
 ) {
     val isError = value.isNotEmpty() && !isValid(value)
 
@@ -267,6 +284,7 @@ fun SettingStringField(
         singleLine = true,
         isError = isError,
         enabled = enabled,
+        visualTransformation = if (isPasswordField) PasswordVisualTransformation() else VisualTransformation.None,
         trailingIcon = if (explanationText != null) {
             {
                 IconButton(onClick = { showExplanation = true }) {

@@ -1,6 +1,7 @@
 package edu.pwr.zpi.netwalk.network
 
 // import edu.pwr.zpi.netwalk.fetcher.NetworkInfoData
+import android.util.Base64
 import edu.pwr.zpi.netwalk.fetcher.MeasurementRequest
 import edu.pwr.zpi.netwalk.logD
 import edu.pwr.zpi.netwalk.logE
@@ -14,10 +15,22 @@ import java.net.URL
 
 class NetworkClient(
     private val baseUrl: String,
+    private val authUser: String? = null,
+    private val authPass: String? = null,
 ) {
     private val json = Json {
         ignoreUnknownKeys = true
         encodeDefaults = false
+    }
+
+    private val authHeaderValue: String? by lazy {
+        if (!authUser.isNullOrEmpty() && !authPass.isNullOrEmpty()) {
+            val credentials = "$authUser:$authPass"
+            val base64Credentials = Base64.encodeToString(credentials.toByteArray(), Base64.NO_WRAP)
+            "Basic $base64Credentials"
+        } else {
+            null
+        }
     }
 
     suspend fun checkHealth(): Result<Unit> =
@@ -59,6 +72,7 @@ class NetworkClient(
                     requestMethod = "POST"
                     doOutput = true
                     setRequestProperty("Content-Type", "application/json")
+                    authHeaderValue?.let { setRequestProperty("Authorization", it) }
                     connectTimeout = 5000
                 }
 
@@ -96,6 +110,7 @@ class NetworkClient(
                     doOutput = true
                     setRequestProperty("Content-Type", "application/json")
                     setRequestProperty("Content-Encoding", "gzip")
+                    authHeaderValue?.let { setRequestProperty("Authorization", it) }
                     connectTimeout = 5000
                 }
                 logI("[NetworkClient: sendGzippedUpdate] POSTing gzipped payload, size=${gzippedBody.size} bytes")
