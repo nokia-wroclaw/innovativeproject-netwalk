@@ -21,14 +21,16 @@ def average_signal(db: Session):
     }
 
 
-def kpi_stats(db: Session, network_type: str | None = None, android_id: str | None = None):
+def kpi_stats(db, network_type=None, android_id=None, cpu_filter=None, cpu_threshold=50.0):
     query = db.query(Measurement)
-
     if network_type:
         query = query.filter(Measurement.network_type == network_type)
-
     if android_id:
         query = query.filter(Measurement.android_id == android_id)
+    if cpu_filter == "without_high":
+        query = query.filter(Measurement.host_cpu < cpu_threshold)
+    elif cpu_filter == "only_high":
+        query = query.filter(Measurement.host_cpu >= cpu_threshold)
 
     result = query.with_entities(
         func.min(Measurement.rsrp).label("min_rsrp"),
@@ -52,33 +54,12 @@ def kpi_stats(db: Session, network_type: str | None = None, android_id: str | No
         return {}
 
     return {
-        "rsrp": {
-            "min": result.min_rsrp,
-            "max": result.max_rsrp,
-            "avg": _to_float(result.avg_rsrp),
-        },
-        "rsrq": {
-            "min": result.min_rsrq,
-            "max": result.max_rsrq,
-            "avg": _to_float(result.avg_rsrq),
-        },
-        "sinr": {
-            "min": result.min_sinr,
-            "max": result.max_sinr,
-            "avg": _to_float(result.avg_sinr),
-        },
-        "dl_throughput_mbps": {
-            "min": _to_float(result.min_dl_throughput),
-            "max": _to_float(result.max_dl_throughput),
-            "avg": _to_float(result.avg_dl_throughput),
-        },
-        "ul_throughput_mbps": {
-            "min": _to_float(result.min_ul_throughput),
-            "max": _to_float(result.max_ul_throughput),
-            "avg": _to_float(result.avg_ul_throughput),
-        },
+        "rsrp": {"min": result.min_rsrp, "max": result.max_rsrp, "avg": _to_float(result.avg_rsrp)},
+        "rsrq": {"min": result.min_rsrq, "max": result.max_rsrq, "avg": _to_float(result.avg_rsrq)},
+        "sinr": {"min": result.min_sinr, "max": result.max_sinr, "avg": _to_float(result.avg_sinr)},
+        "dl_throughput_mbps": {"min": _to_float(result.min_dl_throughput), "max": _to_float(result.max_dl_throughput), "avg": _to_float(result.avg_dl_throughput)},
+        "ul_throughput_mbps": {"min": _to_float(result.min_ul_throughput), "max": _to_float(result.max_ul_throughput), "avg": _to_float(result.avg_ul_throughput)},
     }
-
 
 def get_heatmap_points(
     db: Session,
@@ -214,6 +195,7 @@ def last_measurement(db: Session):
         "dl_throughput_mbps": row.dl_throughput_mbps,
         "ul_throughput_mbps": row.ul_throughput_mbps,
         "test_duration": row.test_duration,
+        "host_cpu": row.host_cpu,
     }
 
 

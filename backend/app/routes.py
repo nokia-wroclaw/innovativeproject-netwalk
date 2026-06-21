@@ -143,6 +143,8 @@ def get_measurements_filtered(  # noqa: PLR0913
     max_latitude: float | None = None,
     min_longitude: float | None = None,
     max_longitude: float | None = None,
+    min_host_cpu: float | None = None,   
+    max_host_cpu: float | None = None,   
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=1000),
 ):
@@ -164,6 +166,8 @@ def get_measurements_filtered(  # noqa: PLR0913
         max_latitude=max_latitude,
         min_longitude=min_longitude,
         max_longitude=max_longitude,
+        min_host_cpu=min_host_cpu,
+        max_host_cpu=max_host_cpu,
     )
 
     return query.order_by(models.Measurement.measured_at.desc()).offset(skip).limit(limit).all()
@@ -201,9 +205,17 @@ def get_kpi(
     db: DbSession,
     network_type: str | None = None,
     android_id: str | None = None,
+    session_id: str | None = None,
+    cpu_filter: str | None = None,
+    cpu_threshold: float = 50.0,
 ):
-    return kpi_stats(db, network_type=network_type, android_id=android_id)
-
+    return kpi_stats(
+        db,
+        network_type=network_type,
+        android_id=android_id,
+        cpu_filter=cpu_filter,
+        cpu_threshold=cpu_threshold,
+    )
 
 @router.get("/analysis/heatmap")
 def get_heatmap(  # noqa: PLR0913

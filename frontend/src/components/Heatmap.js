@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { MapContainer, Circle, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Circle, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import "./Heatmap.css";
 
@@ -67,12 +67,18 @@ export default function Heatmap({
       if (androidId) query.append("android_id", androidId);
       if (sessionId) query.append("session_id", sessionId);
 
-      const data = await fetchJson(`/measurements/filtered?${query.toString()}`, []);
-      setMeasurements(data || []);
+      if (cpuFilter === "without_high") {
+      query.append("max_host_cpu", String(cpuThreshold));
+    } else if (cpuFilter === "only_high") {
+      query.append("min_host_cpu", String(cpuThreshold));
     }
 
-    loadMeasurements();
-  }, [androidId, sessionId]);
+    const data = await fetchJson(`/measurements/filtered?${query.toString()}`, []);
+    setMeasurements(data || []);
+  }
+
+  loadMeasurements();
+}, [androidId, sessionId, cpuFilter, cpuThreshold]);
 
   useEffect(() => {
     async function loadPropagation() {
@@ -157,7 +163,10 @@ export default function Heatmap({
 
       <div className="leaflet-map-wrapper">
         <MapContainer center={FALLBACK_CENTER} zoom={12} scrollWheelZoom className="leaflet-map">
-
+          <TileLayer
+            attribution="OpenStreetMap contributors, CARTO"
+            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          />
           {viewMode === "measurements" &&
             measurements.map((measurement, index) => {
               const lat = getLat(measurement);
