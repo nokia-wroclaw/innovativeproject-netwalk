@@ -250,7 +250,7 @@ def get_devices(db: DbSession):
 def get_device_sessions(
     android_id: str,
     db: DbSession,
-    limit: int = Query(default=5, le=20),
+    limit: int = Query(default=5, le=100),
 ):
     return device_sessions(db, android_id=android_id, limit=limit)
 
@@ -267,13 +267,22 @@ def get_last_measurement_for_device(
     )
 
     if measurement is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Brak pomiarów dla wybranego urządzenia.",
-        )
+        raise HTTPException(status_code=404, detail="Brak pomiarów dla wybranego urządzenia.")
 
-    return measurement
-
+    return {
+        "id": measurement.id,
+        "session_id": str(measurement.session_id),
+        "android_id": measurement.android_id,
+        "measured_at": measurement.measured_at,
+        "battery_level": measurement.battery_level,
+        "host_cpu": measurement.host_cpu,
+        "rsrp": measurement.rsrp,
+        "rsrq": measurement.rsrq,
+        "sinr": measurement.sinr,
+        "network_type": measurement.network_type,
+        "dl_throughput_mbps": measurement.dl_throughput_mbps,
+        "ul_throughput_mbps": measurement.ul_throughput_mbps,
+    }
 
 @router.post("/measurements/batch", response_model=schemas.BatchResponse)
 async def create_measurements_batch(request: Request, db: DbSession):

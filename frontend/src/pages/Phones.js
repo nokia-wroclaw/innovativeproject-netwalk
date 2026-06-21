@@ -44,6 +44,7 @@ export default function Phones() {
 
 useEffect(() => {
   async function loadLastMeasurement() {
+    console.log("loadLastMeasurement dla:", selectedDevice?.android_id);
     if (!selectedDevice?.android_id) {
       setLastMeasurement(null);
       return;
@@ -54,6 +55,7 @@ useEffect(() => {
       null
     );
 
+    console.log("lastMeasurement data:", data);
     setLastMeasurement(data);
   }
 
@@ -149,8 +151,8 @@ useEffect(() => {
           </div>
 
 <div className="summary-row">
-  <Metric label="Bateria" value={`${formatValue(lastMeasurement?.battery_level)}%`} />
-  <Metric label="Host CPU" value={`${formatValue(lastMeasurement?.host_cpu)}%`} />
+  <Metric label="Bateria" value={lastMeasurement?.battery_level} suffix="%" />
+  <Metric label="Host CPU" value={lastMeasurement?.host_cpu} suffix="%" />
   <Metric
     label="Ostatnia sesja"
     value={lastMeasurement?.session_id ? lastMeasurement.session_id.slice(0, 8) : "-"}
