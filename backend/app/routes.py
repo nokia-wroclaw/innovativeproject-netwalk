@@ -275,6 +275,7 @@ def get_last_measurement_for_device(
         "android_id": measurement.android_id,
         "measured_at": measurement.measured_at,
         "battery_level": measurement.battery_level,
+        "battery_temp": measurement.battery_temp,
         "host_cpu": measurement.host_cpu,
         "rsrp": measurement.rsrp,
         "rsrq": measurement.rsrq,

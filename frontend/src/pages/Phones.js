@@ -44,23 +44,30 @@ export default function Phones() {
 
 useEffect(() => {
   async function loadLastMeasurement() {
-    console.log("loadLastMeasurement dla:", selectedDevice?.android_id);
     if (!selectedDevice?.android_id) {
       setLastMeasurement(null);
       return;
     }
 
-    const data = await fetchJson(
-      `/devices/${selectedDevice.android_id}/last-measurement`,
-      null
-    );
+    let data;
+    if (selectedSession?.session_id) {
+      const measurements = await fetchJson(
+        `/measurements/filtered?android_id=${selectedDevice.android_id}&session_id=${selectedSession.session_id}&limit=1`,
+        null
+      );
+      data = measurements?.[0] || null;
+    } else {
+      data = await fetchJson(
+        `/devices/${selectedDevice.android_id}/last-measurement`,
+        null
+      );
+    }
 
-    console.log("lastMeasurement data:", data);
     setLastMeasurement(data);
   }
 
   loadLastMeasurement();
-}, [selectedDevice]);  
+}, [selectedDevice, selectedSession]);
 
 useEffect(() => {
   async function loadDevices() {
@@ -150,16 +157,15 @@ useEffect(() => {
             </div>
           </div>
 
-<div className="summary-row">
-  <Metric label="Bateria" value={lastMeasurement?.battery_level} suffix="%" />
-  <Metric label="Host CPU" value={lastMeasurement?.host_cpu} suffix="%" />
-  <Metric
-    label="Ostatnia sesja"
-    value={lastMeasurement?.session_id ? lastMeasurement.session_id.slice(0, 8) : "-"}
-  />
-</div>
-
           <RecentSessions sessions={sessions} selectedSession={selectedSession} setSelectedSession={setSelectedSession} />
+          <div className="phone-title">
+            <p> Sesja: {selectedSession?.session_id || "Ostatnia sesja"}</p>
+          </div>  
+          <div className="summary-row">
+            <Metric label="Bateria (%)" value={lastMeasurement?.battery_level}/>
+            <Metric label="Temperatura baterii (°C)" value={lastMeasurement?.battery_temp}/>
+            <Metric label="CPU (%)" value={lastMeasurement?.host_cpu}/>
+          </div>
 
           <div className="phone-main-grid">
             <section className="phone-map-panel">
@@ -168,7 +174,7 @@ useEffect(() => {
                 androidId={selectedDevice?.android_id}
                 sessionId={selectedSession?.session_id}
               />
-            </section>
+            </section>  
           </div>
 
           <div className="phone-kpi-row">
