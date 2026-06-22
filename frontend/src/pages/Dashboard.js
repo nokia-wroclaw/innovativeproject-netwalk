@@ -5,13 +5,14 @@ import KPICard from "../components/KPICard";
 import LastSession from "../components/LastSession";
 import "./Dashboard.css";
 
-const API_URL = "http://localhost:8000";
+const API_URL = "/api";
 
 const EMPTY_KPI = {
   rsrp: { min: 0, max: 0, avg: 0 },
   rsrq: { min: 0, max: 0, avg: 0 },
   sinr: { min: 0, max: 0, avg: 0 },
-  throughput_mbps: { min: 0, max: 0, avg: 0 },
+  dl_throughput_mbps: { min: 0, max: 0, avg: 0 },
+  ul_throughput_mbps: { min: 0, max: 0, avg: 0 },
 };
 
 async function fetchJson(path, fallback) {
@@ -29,11 +30,33 @@ export default function Dashboard() {
   const [lteKpi, setLteKpi] = useState(EMPTY_KPI);
   const [fiveGKpi, setFiveGKpi] = useState(EMPTY_KPI);
   const [lastMeasurement, setLastMeasurement] = useState(null);
+  const [cpuFilter, setCpuFilter] = useState("all");
+  const [cpuThreshold, setCpuThreshold] = useState(50);
 
   useEffect(() => {
     async function loadDashboard() {
-      const lte = await fetchJson("/analysis/kpi?network_type=LTE", EMPTY_KPI);
-      const fiveG = await fetchJson("/analysis/kpi?network_type=5G", EMPTY_KPI);
+      const lteParams = new URLSearchParams({
+        network_type: "LTE",
+        cpu_filter: cpuFilter,
+        cpu_threshold: String(cpuThreshold),
+      });
+
+      const fiveGParams = new URLSearchParams({
+        network_type: "5G",
+        cpu_filter: cpuFilter,
+        cpu_threshold: String(cpuThreshold),
+      });
+
+      const lte = await fetchJson(
+        `/analysis/kpi?${lteParams.toString()}`,
+        EMPTY_KPI
+      );
+
+      const fiveG = await fetchJson(
+        `/analysis/kpi?${fiveGParams.toString()}`,
+        EMPTY_KPI
+      );
+
       const last = await fetchJson("/analysis/last-measurement", null);
 
       setLteKpi(lte || EMPTY_KPI);
@@ -42,7 +65,7 @@ export default function Dashboard() {
     }
 
     loadDashboard();
-  }, []);
+  }, [cpuFilter, cpuThreshold]);
 
   return (
     <main className="page">
@@ -52,7 +75,14 @@ export default function Dashboard() {
 
       <div className="dashboard-grid">
         <section className="card dashboard-map-panel">
-          <Heatmap />
+          <Heatmap
+            cpuFilter={cpuFilter}
+            cpuThreshold={cpuThreshold}
+            setCpuFilter={setCpuFilter}
+            setCpuThreshold={setCpuThreshold}
+          />
+
+          <LastSession lastMeasurement={lastMeasurement} />
         </section>
 
         <section className="card dashboard-kpi-panel">
@@ -61,8 +91,6 @@ export default function Dashboard() {
           <KPICard title="5G" color="#8b5cf6" kpi={fiveGKpi} />
         </section>
       </div>
-
-      <LastSession lastMeasurement={lastMeasurement} />
     </main>
   );
 }

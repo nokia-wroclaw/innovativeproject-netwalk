@@ -5,7 +5,8 @@ const EMPTY_KPI = {
   rsrp: { min: 0, max: 0, avg: 0 },
   rsrq: { min: 0, max: 0, avg: 0 },
   sinr: { min: 0, max: 0, avg: 0 },
-  throughput_mbps: { min: 0, max: 0, avg: 0 },
+  dl_throughput_mbps: { min: 0, max: 0, avg: 0 },
+  ul_throughput_mbps: { min: 0, max: 0, avg: 0 },
 };
 
 function formatValue(value, digits = 1) {
@@ -21,7 +22,14 @@ export default function KPICard({ title, color, kpi = EMPTY_KPI }) {
     rsrp: { label: "RSRP dBm", data: kpi.rsrp },
     rsrq: { label: "RSRQ dB", data: kpi.rsrq },
     sinr: { label: "SINR dB", data: kpi.sinr },
-    throughput_mbps: { label: "DL Throughput Mbps", data: kpi.throughput_mbps },
+    dl_throughput_mbps: {
+      label: "DL Throughput Mbps",
+      data: kpi.dl_throughput_mbps,
+    },
+    ul_throughput_mbps: {
+      label: "UL Throughput Mbps",
+      data: kpi.ul_throughput_mbps,
+    },
   };
 
   return (
@@ -29,15 +37,29 @@ export default function KPICard({ title, color, kpi = EMPTY_KPI }) {
       <div className="kpi-title" style={{ color }}>{title}</div>
 
       <div className="kpi-param-tabs">
-        {Object.entries(params).map(([key, param]) => (
-          <button
-            key={key}
-            className={selectedParam === key ? "kpi-param active" : "kpi-param"}
-            onClick={() => setSelectedParam(key)}
-          >
-            {param.label}
-          </button>
-        ))}
+        <div className="kpi-row1">
+          {["rsrp", "rsrq", "sinr"].map((key) => (
+            <button
+              key={key}
+              className={selectedParam === key ? "kpi-param active" : "kpi-param"}
+              onClick={() => setSelectedParam(key)}
+            >
+              {params[key].label}
+            </button>
+          ))}
+        </div>
+
+        <div className="kpi-row2">
+          {["dl_throughput_mbps", "ul_throughput_mbps"].map((key) => (
+            <button
+              key={key}
+              className={selectedParam === key ? "kpi-param active" : "kpi-param"}
+              onClick={() => setSelectedParam(key)}
+            >
+              {params[key].label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="kpi-content">
