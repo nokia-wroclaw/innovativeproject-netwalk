@@ -174,8 +174,8 @@ def get_measurements_filtered(  # noqa: PLR0913
     max_latitude: float | None = None,
     min_longitude: float | None = None,
     max_longitude: float | None = None,
-    min_host_cpu: float | None = None,   
-    max_host_cpu: float | None = None,   
+    min_host_cpu: float | None = None,
+    max_host_cpu: float | None = None,
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=1000),
     _: None = Depends(verify_basic_auth),
@@ -254,6 +254,7 @@ def get_kpi(
         cpu_threshold=cpu_threshold,
     )
 
+
 @router.get("/analysis/heatmap")
 def get_heatmap(  # noqa: PLR0913
     db: DbSession,
@@ -295,10 +296,10 @@ def get_device_sessions(
     android_id: str,
     db: DbSession,
     limit: int = Query(default=5, le=100),
-    limit: int = Query(default=5, le=20),
     _: None = Depends(verify_basic_auth),
 ):
     return device_sessions(db, android_id=android_id, limit=limit)
+
 
 @router.get("/devices/{android_id}/last-measurement")
 def get_last_measurement_for_device(
@@ -330,6 +331,7 @@ def get_last_measurement_for_device(
         "dl_throughput_mbps": measurement.dl_throughput_mbps,
         "ul_throughput_mbps": measurement.ul_throughput_mbps,
     }
+
 
 @router.post("/measurements/batch", response_model=schemas.BatchResponse)
 async def create_measurements_batch(

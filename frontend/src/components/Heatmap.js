@@ -85,7 +85,7 @@ export default function Heatmap({
     async function loadPropagation() {
       if (viewMode !== "propagation") return;
 
-      const query = new URLSearchParams({ parameter: layer, resolution: "60" });
+      const query = new URLSearchParams({ parameter: layer, resolution: "30" });
       if (androidId) query.append("android_id", androidId);
       if (sessionId) query.append("session_id", sessionId);
 
@@ -184,7 +184,7 @@ export default function Heatmap({
                   pathOptions={{
                     color: getColor(value, layer),
                     fillColor: getColor(value, layer),
-                    fillOpacity: 0.65,
+                    fillOpacity: 0.15,
                     weight: 1,
                   }}
                 >
@@ -210,11 +210,11 @@ export default function Heatmap({
               <Circle
                 key={index}
                 center={[point.lat, point.lon]}
-                radius={15}
+                radius={10}
                 pathOptions={{
                   color: getColor(point.value, layer),
                   fillColor: getColor(point.value, layer),
-                  fillOpacity: 0.5,
+                  fillOpacity: 0.15,
                   weight: 0,
                 }}
               />
