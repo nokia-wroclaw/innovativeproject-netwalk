@@ -16,9 +16,9 @@ during walk-tests.
 
 ![Web dashboard](./assets/screenshot_webdashboard.png)
 
-## Deploy
+## Usage
 
-Install android application from releases, then:
+### Infrastructure
 
 ``` sh
 cp ./.env.example ./.env    # crete env file from example, edit if nesesarry
@@ -28,6 +28,17 @@ docker compose up --build   # deploy full aplication
 
 Web application will be available on port `8080`, via web-server,
 ready to be hosted on network.
+
+### Android Application
+
+Install android application from releases, in settings provide:
+
+- API address
+- iperf3 address IP and port
+- credentials (from `.env`)
+
+> Note: then changing iperf3 test parameters (specifcally `-M`, `-I` and`-b`) pay attention to your network capabilities
+> E.g. in standart 5G network TCP DF pacakges cannot be larger then 1500 bytes, including heasers.
 
 ## Load database snapshot (if nesesasrry)
 
