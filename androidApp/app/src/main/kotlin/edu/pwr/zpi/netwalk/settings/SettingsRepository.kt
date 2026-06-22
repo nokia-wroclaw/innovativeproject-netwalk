@@ -57,6 +57,9 @@ class SettingsRepository(
 
     val sendImmediately = PreferenceItem(booleanPreferencesKey("send_immediately"), false)
 
+    val authUser = PreferenceItem(stringPreferencesKey("auth_user"), "")
+    val authPass = PreferenceItem(stringPreferencesKey("auth_pass"), "")
+
     // not exposed to ui
     val maxQueueSize = PreferenceItem(longPreferencesKey("max_queue_size"), 30L)
 }

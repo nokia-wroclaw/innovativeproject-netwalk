@@ -68,7 +68,7 @@ up-full:
 
 
 # zatrzymaj cały serwis ale zachowaj baze
-down-remove:
+down:
     docker compose down
 
 # zatrzymaj cały serwis i usuń dane
