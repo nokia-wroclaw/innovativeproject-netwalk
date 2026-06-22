@@ -100,7 +100,7 @@ def measurement_filters(  # noqa: PLR0913
         query = query.filter(models.Measurement.sinr >= min_sinr)
 
     if min_throughput is not None:
-        query = query.filter(models.Measurement.throughput_mbps >= min_throughput)
+        query = query.filter(models.Measurement.dl_throughput_mbps >= min_throughput)
 
     if start_date:
         query = query.filter(models.Measurement.measured_at >= start_date)
@@ -175,6 +175,8 @@ def get_measurements_filtered(  # noqa: PLR0913
     max_latitude: float | None = None,
     min_longitude: float | None = None,
     max_longitude: float | None = None,
+    min_host_cpu: float | None = None,
+    max_host_cpu: float | None = None,
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=1000),
     _: None = Depends(verify_basic_auth),
@@ -197,6 +199,8 @@ def get_measurements_filtered(  # noqa: PLR0913
         max_latitude=max_latitude,
         min_longitude=min_longitude,
         max_longitude=max_longitude,
+        min_host_cpu=min_host_cpu,
+        max_host_cpu=max_host_cpu,
     )
 
     return query.order_by(models.Measurement.measured_at.desc()).offset(skip).limit(limit).all()
@@ -238,9 +242,18 @@ def get_kpi(
     db: DbSession,
     network_type: str | None = None,
     android_id: str | None = None,
+    session_id: str | None = None,
+    cpu_filter: str | None = None,
+    cpu_threshold: float = 50.0,
     _: None = Depends(verify_basic_auth),
 ):
-    return kpi_stats(db, network_type=network_type, android_id=android_id)
+    return kpi_stats(
+        db,
+        network_type=network_type,
+        android_id=android_id,
+        cpu_filter=cpu_filter,
+        cpu_threshold=cpu_threshold,
+    )
 
 
 @router.get("/analysis/heatmap")
@@ -283,10 +296,42 @@ def get_devices(
 def get_device_sessions(
     android_id: str,
     db: DbSession,
-    limit: int = Query(default=5, le=20),
+    limit: int = Query(default=5, le=100),
     _: None = Depends(verify_basic_auth),
 ):
     return device_sessions(db, android_id=android_id, limit=limit)
+
+
+@router.get("/devices/{android_id}/last-measurement")
+def get_last_measurement_for_device(
+    android_id: str,
+    db: DbSession,
+):
+    measurement = (
+        db.query(models.Measurement)
+        .filter(models.Measurement.android_id == android_id)
+        .order_by(models.Measurement.measured_at.desc())
+        .first()
+    )
+
+    if measurement is None:
+        raise HTTPException(status_code=404, detail="Brak pomiarów dla wybranego urządzenia.")
+
+    return {
+        "id": measurement.id,
+        "session_id": str(measurement.session_id),
+        "android_id": measurement.android_id,
+        "measured_at": measurement.measured_at,
+        "battery_level": measurement.battery_level,
+        "battery_temp": measurement.battery_temp,
+        "host_cpu": measurement.host_cpu,
+        "rsrp": measurement.rsrp,
+        "rsrq": measurement.rsrq,
+        "sinr": measurement.sinr,
+        "network_type": measurement.network_type,
+        "dl_throughput_mbps": measurement.dl_throughput_mbps,
+        "ul_throughput_mbps": measurement.ul_throughput_mbps,
+    }
 
 
 @router.post("/measurements/batch", response_model=schemas.BatchResponse)
@@ -413,8 +458,10 @@ def get_measurements_stats(  # noqa: PLR0913
         func.avg(models.Measurement.sinr).label("avg_sinr"),
         func.min(models.Measurement.sinr).label("min_sinr"),
         func.max(models.Measurement.sinr).label("max_sinr"),
-        func.avg(models.Measurement.throughput_mbps).label("avg_throughput"),
-        func.max(models.Measurement.throughput_mbps).label("max_throughput"),
+        func.avg(models.Measurement.dl_throughput_mbps).label("avg_dl_throughput"),
+        func.max(models.Measurement.dl_throughput_mbps).label("max_dl_throughput"),
+        func.avg(models.Measurement.ul_throughput_mbps).label("avg_ul_throughput"),
+        func.max(models.Measurement.ul_throughput_mbps).label("max_ul_throughput"),
     ).first()
 
     filtered_base = measurement_filters(
@@ -470,8 +517,18 @@ def get_measurements_stats(  # noqa: PLR0913
         "avg_sinr": float(stats.avg_sinr) if stats.avg_sinr is not None else None,
         "min_sinr": stats.min_sinr,
         "max_sinr": stats.max_sinr,
-        "avg_throughput": float(stats.avg_throughput) if stats.avg_throughput is not None else None,
-        "max_throughput": float(stats.max_throughput) if stats.max_throughput is not None else None,
+        "avg_dl_throughput": float(stats.avg_dl_throughput)
+        if stats.avg_dl_throughput is not None
+        else None,
+        "max_dl_throughput": float(stats.max_dl_throughput)
+        if stats.max_dl_throughput is not None
+        else None,
+        "avg_ul_throughput": float(stats.avg_ul_throughput)
+        if stats.avg_ul_throughput is not None
+        else None,
+        "max_ul_throughput": float(stats.max_ul_throughput)
+        if stats.max_ul_throughput is not None
+        else None,
         "network_distribution": network_dist,
         "band_distribution": band_dist,
         "measurements_by_hour": hour_dist,
@@ -526,7 +583,8 @@ def get_kpi_with_cpu_filter(
         query = query.filter(models.Measurement.host_cpu >= cpu_threshold)
 
     result = query.with_entities(
-        func.avg(models.Measurement.throughput_mbps).label("avg_throughput"),
+        func.avg(models.Measurement.dl_throughput_mbps).label("avg_dl_throughput"),
+        func.avg(models.Measurement.ul_throughput_mbps).label("avg_ul_throughput"),
         func.avg(models.Measurement.latency_ms).label("avg_latency"),
         func.avg(models.Measurement.rsrp).label("avg_rsrp"),
     ).first()
@@ -534,7 +592,12 @@ def get_kpi_with_cpu_filter(
     return {
         "cpu_filter": cpu_filter,
         "cpu_threshold": cpu_threshold,
-        "avg_throughput": float(result.avg_throughput) if result and result.avg_throughput else None,
+        "avg_dl_throughput": float(result.avg_dl_throughput)
+        if result and result.avg_dl_throughput
+        else None,
+        "avg_ul_throughput": float(result.avg_ul_throughput)
+        if result and result.avg_ul_throughput
+        else None,
         "avg_latency": float(result.avg_latency) if result and result.avg_latency else None,
         "avg_rsrp": float(result.avg_rsrp) if result and result.avg_rsrp else None,
     }

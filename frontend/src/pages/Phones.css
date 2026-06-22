@@ -27,6 +27,7 @@
 .summary-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
   padding: 14px;
   margin-bottom: 18px;
 }
@@ -38,7 +39,7 @@
 }
 
 .phone-main-grid .leaflet-map-wrapper {
-  height: 1fr;
+  height: 420px;
 }
 
 .phone-kpi-panel {

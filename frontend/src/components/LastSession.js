@@ -21,7 +21,8 @@ export default function LastSession({ lastMeasurement }) {
         <Metric label="RSRP dBm" value={lastMeasurement?.rsrp} />
         <Metric label="RSRQ dB" value={lastMeasurement?.rsrq} />
         <Metric label="SINR dB" value={lastMeasurement?.sinr} />
-        <Metric label="DL Throughput Mbps" value={lastMeasurement?.throughput_mbps} />
+        <Metric label="DL Throughput Mbps" value={lastMeasurement?.dl_throughput_mbps} />
+        <Metric label="UL Throughput Mbps" value={lastMeasurement?.ul_throughput_mbps} />
       </div>
     </section>
   );
