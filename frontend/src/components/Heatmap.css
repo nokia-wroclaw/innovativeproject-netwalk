@@ -113,6 +113,8 @@
 .view-toggle-btn.routing.active {
   background: #3b82f6;
   color: white;
+}
+
 .map-header {
   display: flex;
   align-items: center;
