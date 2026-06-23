@@ -276,7 +276,7 @@ export default function Heatmap({
                 <Circle
                   key={measurement.id || index}
                   center={[lat, lon]}
-                  radius={60}
+                  radius={3}
                   pathOptions={{
                     color: getColor(value, layer),
                     fillColor: getColor(value, layer),
@@ -306,7 +306,7 @@ export default function Heatmap({
               <Circle
                 key={index}
                 center={[point.lat, point.lon]}
-                radius={10}
+                radius={3}
                 pathOptions={{
                   color: getColor(point.value, layer),
                   fillColor: getColor(point.value, layer),
