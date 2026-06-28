@@ -6,8 +6,10 @@ during walk-tests.
 
 ## Key features
 
-- *Data Collection*: Real-time network parameters measuring (RSRP, RSRQ, SINR, CID, TAC, Band) and throughput testing (iperf3 TCP/UDP).
-- *Geo-spatial and time-series Storage*: High-performance storage using TimescaleDB with PostGIS extensions for precise location tracking and robust retrieval.
+- *Data Collection*: Real-time network parameters measuring
+ (RSRP, RSRQ, SINR, CID, TAC, Band) and throughput testing (iperf3 TCP/UDP).
+- *Geo-spatial and time-series Storage*: High-performance storage using TimescaleDB
+ with PostGIS extensions for precise location tracking and robust retrieval.
 - *Analytical Engine*: KPI calculation, multi-parameter filtering, and session management.
 - *Visualization*: Interactive mapping with heatmaps and signal propagation maps.
 - *REST API*: Easy integration for external data analysis tools.
@@ -21,9 +23,9 @@ during walk-tests.
 ### Infrastructure
 
 ``` sh
-cp ./.env.example ./.env    # crete env file from example, edit if nesesarry
+cp ./.env.example ./.env    # create env file from example, edit if nesesary
 
-docker compose up --build   # deploy full aplication
+docker compose up --build   # deploy full application
 ```
 
 Web application will be available on port `8080`, via web-server,
@@ -37,8 +39,11 @@ Install android application from releases, in settings provide:
 - iperf3 address IP and port
 - credentials (from `.env`)
 
-> Note: then changing iperf3 test parameters (specifcally `-M`, `-I` and`-b`) pay attention to your network capabilities
-> E.g. in standart 5G network TCP DF pacakges cannot be larger then 1500 bytes, including heasers.
+> Note: when changing iperf3 test parameters (specifically `-M`, `-I` and`-b`)
+> pay attention to your network capabilities
+>
+> *E.g. in standard 5G network TCP DF packets cannot be larger than 1500 bytes,*
+> *including headers.*
 
 ## Load database snapshot (if nesesasrry)
 
